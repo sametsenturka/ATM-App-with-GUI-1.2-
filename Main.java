@@ -1,81 +1,209 @@
-// Bilgi Islem Menusu Uygulamasi
+/*
+*
+*@author Samet Senturk
+*@version 2.3
+*@date 11-12-2024
+*/
 
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
 
-import javax.swing.JOptionPane;
+public class Main extends JFrame {
+    private JTextField firstNameField, surnameField, balanceField;
+    private JTextArea displayArea;
+    private double balance = 0.0;
+    private boolean isStarted = false;
 
-public class Main {
-    public static void main(String[] args) {
-        // Kullanıcıdan isim ve soyisim alma
-        String name = JOptionPane.showInputDialog(null, "Lütfen isminizi girin:");
-        String surname = JOptionPane.showInputDialog(null, "Lütfen soyisminizi girin:");
+    public Main() {
+        setTitle("ATM Application");
+        setSize(500, 400);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setLayout(new BorderLayout());
 
-        // İşlem yaparken döngü kullanacağız
-        boolean exit = false;
+        // Kullanıcı giriş paneli
+        JPanel userPanel = new JPanel(new GridLayout(3, 2));
+        userPanel.add(new JLabel("Name:"));
+        firstNameField = new JTextField();
+        userPanel.add(firstNameField);
 
-        while (!exit) {
-            // Menü seçeneklerini göster
-            String menu = "Menü:\n"
-                    + "1. Uppercase/Lowercase Çevirme\n"
-                    + "2. Boşlukları Kaldırma\n"
-                    + "3. İstediğiniz Harfi Değiştirme\n"
-                    + "4. Çıkış\n"
-                    + "5. Bilgilerimi Göster\n"
-                    + "Bir seçenek girin (1-5):";
+        userPanel.add(new JLabel("Starting Balance:"));
+        balanceField = new JTextField();
+        userPanel.add(balanceField);
 
-            // Kullanıcıdan seçenek alma
-            String choice = JOptionPane.showInputDialog(null, menu);
+        JButton startButton = new JButton("Start");
+        startButton.addActionListener(new StartButtonListener());
+        userPanel.add(startButton);
 
-            switch (choice) {
-                case "1":
-                    // Büyük/Küçük harfe çevirme
-                    String subMenu = "1. Büyük Harfe Çevir\n"
-                            + "2. Küçük Harfe Çevir\n"
-                            + "Bir seçenek girin (1-2):";
-                    String caseChoice = JOptionPane.showInputDialog(null, subMenu);
-                    if (caseChoice.equals("1")) {
-                        name = name.toUpperCase();
-                        surname = surname.toUpperCase();
-                        JOptionPane.showMessageDialog(null, "İsim ve Soyisim büyük harfe çevrildi:\n" + name + " " + surname);
-                    } else if (caseChoice.equals("2")) {
-                        name = name.toLowerCase();
-                        surname = surname.toLowerCase();
-                        JOptionPane.showMessageDialog(null, "İsim ve Soyisim küçük harfe çevrildi:\n" + name + " " + surname);
-                    } else {
-                        JOptionPane.showMessageDialog(null, "Geçersiz seçim!");
+        JButton ExitButton = new JButton("Exit");
+        ExitButton.addActionListener(new ExitButtonListener());
+        userPanel.add(ExitButton);
+
+        add(userPanel, BorderLayout.NORTH);
+
+        // İşlem seçenekleri paneli
+        JPanel actionPanel = new JPanel(new GridLayout(2, 2));
+
+        JButton balanceButton = new JButton("Check Balance");
+        balanceButton.addActionListener(e -> displayBalance());
+        actionPanel.add(balanceButton);
+
+        JButton withdrawButton = new JButton("Withdraw");
+        withdrawButton.addActionListener(e -> withdraw());
+        actionPanel.add(withdrawButton);
+
+        JButton depositButton = new JButton("Deposit");
+        depositButton.addActionListener(e -> deposit());
+        actionPanel.add(depositButton);
+
+        JButton billButton = new JButton("Pay Bill");
+        billButton.addActionListener(e -> payBill());
+        actionPanel.add(billButton);
+
+        add(actionPanel, BorderLayout.CENTER);
+
+        // Ekran mesaj alanı
+        displayArea = new JTextArea();
+        displayArea.setEditable(false);
+        displayArea.setLineWrap(true);
+        displayArea.setWrapStyleWord(true);
+        add(new JScrollPane(displayArea), BorderLayout.SOUTH);
+    }
+
+    private class StartButtonListener implements ActionListener {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            String password = JOptionPane.showInputDialog(null, "Enter Password:");
+
+            // Şifre doğrulaması
+            if (isValidPassword(password)) {
+                try {
+                    String firstName = firstNameField.getText().trim();
+
+                    if (firstName.isEmpty()) {
+                        displayMessage("ERROR: Name required.\n", Color.RED);
+                        return;
                     }
-                    break;
 
-                case "2":
-                    // Boşlukları kaldırma
-                    name = name.replaceAll(" ", "");
-                    surname = surname.replaceAll(" ", "");
-                    JOptionPane.showMessageDialog(null, "Boşluklar kaldırıldı:\n" + name + " " + surname);
-                    break;
+                    balance = Double.parseDouble(balanceField.getText().trim());
+                    if (balance < 0) {
+                        displayMessage("ERROR: Invalid Balance\n", Color.RED);
+                        return;
+                    }
 
-                case "3":
-                    // İstediğimiz harfi değiştirme
-                    String oldChar = JOptionPane.showInputDialog(null, "Değiştirmek istediğiniz harfi girin:");
-                    String newChar = JOptionPane.showInputDialog(null, "Yerine koymak istediğiniz harfi girin:");
-                    name = name.replace(oldChar.charAt(0), newChar.charAt(0));
-                    surname = surname.replace(oldChar.charAt(0), newChar.charAt(0));
-                    JOptionPane.showMessageDialog(null, "Harf değiştirildi:\n" + name + " " + surname);
-                    break;
-
-                case "4":
-                    // Programdan çıkış
-                    exit = true;
-                    JOptionPane.showMessageDialog(null, "Çıkılıyor...");
-                    break;
-
-                case "5":
-                    // Bilgileri gösterme
-                    JOptionPane.showMessageDialog(null, "İsim: " + name + "\nSoyisim: " + surname);
-                    break;
-
-                default:
-                    // Geçersiz seçim
-                    JOptionPane.showMessageDialog(null, "Geçersiz seçim! Lütfen 1-5 arası bir sayı girin.");
+                    isStarted = true;
+                    displayMessage("Welcome, " + firstName + "\n", Color.BLACK);
+                } catch (NumberFormatException ex) {
+                    displayMessage("ERROR: Invalid balance input.\n", Color.RED);
+                }
+            } else {
+                displayMessage("ERROR: Invalid password format.\n", Color.RED);
             }
         }
+    }
+
+    private class ExitButtonListener implements ActionListener {
+        @Override
+        public void actionPerformed(ActionEvent d) {
+            JOptionPane.showMessageDialog(null, "Exiting..");
+        }
+    }
+
+    private void displayBalance() {
+        if (checkStarted()) {
+            JOptionPane.showMessageDialog(null, "Your Balance is " + balance);
+        }
+    }
+
+    private void withdraw() {
+        if (checkStarted()) {
+            String amountString = JOptionPane.showInputDialog(this, "Enter amount to withdraw:");
+            try {
+                double amount = Double.parseDouble(amountString);
+                if (amount <= 0 || amount > balance) {
+                    displayMessage("ERROR: Invalid withdrawal amount.\n", Color.RED);
+                } else {
+                    balance -= amount;
+                    displayMessage("Withdrawal successful. New balance: $" + balance + "\n", Color.BLACK);
+                }
+            } catch (NumberFormatException ex) {
+                displayMessage("ERROR: Invalid withdrawal amount.\n", Color.RED);
+            }
+        }
+    }
+
+    private void deposit() {
+        if (checkStarted()) {
+            String amountString = JOptionPane.showInputDialog(this, "Enter amount to deposit:");
+            try {
+                double amount = Double.parseDouble(amountString);
+                if (amount > 0) {
+                    balance += amount;
+                    displayMessage("Deposit successful. New balance: $" + balance + "\n", Color.BLACK);
+                } else {
+                    displayMessage("ERROR: Invalid deposit amount.\n", Color.RED);
+                }
+            } catch (NumberFormatException ex) {
+                displayMessage("ERROR: Invalid deposit amount.\n", Color.RED);
+            }
+        }
+    }
+
+    private void payBill() {
+        if (checkStarted()) {
+            String[] bills = {"Electricity", "Water", "Internet"};
+            int choice = JOptionPane.showOptionDialog(this, "Select a bill to pay:",
+                    "Bill Payment", JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE,
+                    null, bills, bills[0]);
+
+            if (choice != -1) {
+                double billAmount = Math.round((0.01 + Math.random() * 99.9) * 100.0) / 100.0;
+                String billType = bills[choice];
+
+                int confirm = JOptionPane.showConfirmDialog(this,
+                        "Your " + billType + " bill is $" + billAmount + ". Do you wish to pay?",
+                        "Confirm Payment", JOptionPane.YES_NO_OPTION);
+
+                if (confirm == JOptionPane.YES_OPTION) {
+                    if (balance >= billAmount) {
+                        balance -= billAmount;
+                        displayMessage("Payment successful for " + billType + ". New balance: $" + balance + "\n", Color.BLACK);
+                    } else {
+                        displayMessage("Insufficient funds to pay the " + billType + " bill.\n", Color.RED);
+                    }
+                }
+            }
+        }
+    }
+
+    private boolean checkStarted() {
+        if (!isStarted) {
+            displayMessage("ERROR: Please start the session first.\n", Color.RED);
+            return false;
+        }
+        return true;
+    }
+
+    private void displayMessage(String message, Color color) {
+        displayArea.setForeground(color);
+        displayArea.append(message);
+    }
+
+    // Şifre doğrulama fonksiyonu
+    public static boolean isValidPassword(String password) {
+        String regex = "^(?=.*[A-Z])(?=(.*\\d){2,}).{5,}$";
+        Pattern pattern = Pattern.compile(regex);
+        Matcher matcher = pattern.matcher(password);
+        return matcher.matches();
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> {
+            Main frame = new Main();
+            frame.setVisible(true);
+        });
     }
 }
